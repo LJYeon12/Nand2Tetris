@@ -41,8 +41,24 @@ CHIP ALU {
         ng;      // if (out < 0)  equals 1, else 0
 
     PARTS:
-    Mux16(a=x[0..15], b=false, sel=zx, out=valuex);
+    Mux16(a=x, b=false, sel=zx, out=x1);
+    Not16(in=x1, out=notx1); 
+    // not을 구한 다음 Mux를 통해 nx==1인 경우 x1, 0이면 notx1 선택
+    Mux16(a=x1, b=notx1, sel=nx, out=x2);
+
+    Mux16(a=y, b=false, sel=zy, out=y1);
+    Not16(in=y1, out=noty1);
+    Mux16(a=y1, b=noty1, sel=ny, out=y2);
+
+    Add16(a=x2, b=y2, out=sumf1);
+    And16(a=x2, b=y2, out=sumf0);
+    Mux16(a=sumf0, b=sumf1, sel=f, out=out0);
     
-    Mux16(a=y[0..15], b=false, sel=zy, out=valuey);
-    
+    Not16(in=out0, out=notout0);
+    Mux16(a=out0, b=notout0, sel=no, out=out, out[15]=ng, out[0..7]=outflag1, out[8..15]=outflag2);
+
+    Or8Way(in=outflag1, out=o1);
+    Or8Way(in=outflag2, out=o2);
+    Or(a=o1, b=o2, out=o);
+    Not(in=o, out=zr);
 }
